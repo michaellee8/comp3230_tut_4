@@ -1,0 +1,10 @@
+# Exercise 3: Fix counter
+
+## Explaination
+
+The first problem is that `offset = 1` passed into `th1` is mutated by 
+`offset = -1` before `th2`, which causes some of the iteration in `th1` 
+performing minus instead of plus incorrectly.
+
+The second problem is that `counter += offset` is not an atomic operation. 
+The value of counter can be changed before offset was added to that.
