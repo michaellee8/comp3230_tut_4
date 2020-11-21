@@ -25,6 +25,7 @@ static struct timespec duty_ts;
 static sem_t consumer;
 static sem_t bread;
 static sem_t space;
+static pthread_mutex_t consumer_mut = PTHREAD_MUTEX_INITIALIZER;
 
 void *Chef(void *arg) {
   int s;
@@ -48,6 +49,7 @@ void *Chef(void *arg) {
 }
 
 void *Consumer(void *arg) {
+  pthread_mutex_lock(&consumer_mut);
   sem_post(&consumer);
   setTimespec(&duty_ts, chefWaitTime, 0);
   struct timespec wait_ts;
@@ -59,12 +61,16 @@ void *Consumer(void *arg) {
   if (s == -1) {
     if (errno == ETIMEDOUT) {
       time_printf(__func__, "waiting for %d sec and gives up.\n", waitTime);
+      pthread_mutex_unlock(&consumer_mut);
       pthread_exit(NULL);
-    } else
+    } else{
+      pthread_mutex_unlock(&consumer_mut);
       perror("sem_timedwait");
+    }
   }
   time_printf(__func__, "hot bread got.\n");
   sem_post(&space);
+  pthread_mutex_unlock(&consumer_mut);
   pthread_exit(NULL);
 }
 
