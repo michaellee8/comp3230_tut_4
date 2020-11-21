@@ -6,6 +6,7 @@ Queue queueCreate(unsigned capacity){
   q->front = q->size = 0;
   q->rear = capacity - 1;
   q->array = malloc(q->capacity * sizeof(*q->array));
+  q->sem = malloc(sizeof(sem_t));
   sem_init(q->sem, 0, 1);
   return q;
 }
@@ -14,6 +15,7 @@ void queueDestroy(Queue q){
   free(q->array);
   free(q);
   sem_destroy(q->sem);
+  free(q->sem);
 }
 
 int queueIsFull(Queue q){
@@ -26,7 +28,10 @@ int queueIsEmpty(Queue q){
 
 int queueEnqueue(Queue q, int* value){ 
   sem_wait(q->sem);
-  if (queueIsFull(q)) return -1;
+  if (queueIsFull(q)){
+    sem_post(q->sem);
+    return -1;
+  }
   q->rear = (q->rear + 1) % q->capacity;
   q->array[q->rear] = *value;
   q->size = q->size + 1;
@@ -37,7 +42,11 @@ int queueEnqueue(Queue q, int* value){
 
 int queueDequeueFront(Queue queue, int* container){ 
   sem_wait(queue->sem);
-  if (queueIsEmpty(queue)) return -1; 
+  if (queueIsEmpty(queue)){
+    sem_post(queue->sem);
+    return -1;
+  }
+
   *container = queue->array[queue->front];
   queue->front = (queue->front + 1) % queue->capacity;
   queue->size = queue->size - 1;
@@ -47,7 +56,11 @@ int queueDequeueFront(Queue queue, int* container){
 
 int queueDequeueRear(Queue queue, int* container){
   sem_wait(queue->sem);
-  if (queueIsEmpty(queue)) return -1; 
+  if (queueIsEmpty(queue)){
+    sem_post(queue->sem);
+    return -1;
+  }
+
   *container = queue->array[queue->rear];
   queue->rear = (queue->capacity + queue->rear - 1) % queue->capacity;
   queue->size = queue->size - 1; 
