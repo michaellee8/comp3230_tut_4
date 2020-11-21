@@ -20,6 +20,7 @@
 typedef struct queue_t {
 	unsigned int front, rear, size, capacity;
 	int * array;
+    sem_t * sem;
 } queue_t; 
 typedef struct queue_t* Queue;
 
